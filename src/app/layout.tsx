@@ -1,11 +1,13 @@
 import "@/app/globals.css";
+import { Inter } from "next/font/google";
+import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/components/providers/auth-provider";
 
-import type { Metadata } from "next";
-import { Toaster } from "@/components/ui/sonner";
+const inter = Inter({ subsets: ["latin"] });
 
-export const metadata: Metadata = {
-  title: "Voice Journal - AI-Powered Audio Journaling",
-  description: "Record your thoughts and let AI transcribe and analyze them.",
+export const metadata = {
+  title: "Voice Journal",
+  description: "AI-Powered Voice Journal Web App",
 };
 
 export default function RootLayout({
@@ -15,11 +17,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen bg-background font-sans antialiased">
-        <main className="relative flex min-h-screen flex-col">
+      <body className={inter.className}>
+        <AuthProvider>
           {children}
-        </main>
-        <Toaster />
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

@@ -12,19 +12,14 @@ export async function middleware(req: NextRequest) {
 
   // If user is not signed in and the current path is not /auth/login,
   // redirect the user to /auth/login
-  if (!session && !req.nextUrl.pathname.startsWith('/auth')) {
-    const redirectUrl = req.nextUrl.clone()
-    redirectUrl.pathname = '/auth/login'
-    redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname)
-    return NextResponse.redirect(redirectUrl)
+  if (!session && req.nextUrl.pathname !== '/auth/login') {
+    return NextResponse.redirect(new URL('/auth/login', req.url))
   }
 
   // If user is signed in and the current path is /auth/login,
-  // redirect the user to /dashboard
-  if (session && req.nextUrl.pathname.startsWith('/auth')) {
-    const redirectUrl = req.nextUrl.clone()
-    redirectUrl.pathname = '/dashboard'
-    return NextResponse.redirect(redirectUrl)
+  // redirect the user to /
+  if (session && req.nextUrl.pathname === '/auth/login') {
+    return NextResponse.redirect(new URL('/', req.url))
   }
 
   return res

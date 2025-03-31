@@ -1,120 +1,85 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
 
 export function AuthForm() {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-  const supabase = createClient();
 
-  const handleSignIn = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsLoading(true);
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const result = await signIn("forwardemail", {
         email,
-        password,
+        redirect: false,
       });
 
-      if (error) throw error;
+      if (result?.error) {
+        throw new Error(result.error);
+      }
 
-      router.push("/dashboard");
-      router.refresh();
+      toast.success("Check your email for the magic link!");
     } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      const errorMessage = error instanceof Error ? error.message : "Error sending magic link. Please try again.";
+      console.error("Magic link error:", errorMessage);
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-
-    try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      router.push("/dashboard");
-      router.refresh();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "An error occurred");
-    } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Welcome to Voice Journal</CardTitle>
-        <CardDescription>Sign in to your account or create a new one</CardDescription>
-      </CardHeader>
-      <form onSubmit={handleSignIn}>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+    <div className="w-full max-w-md space-y-8">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold">Welcome back</h2>
+        <p className="mt-2 text-sm text-gray-600">
+          Enter your email to receive a magic link
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+        <div className="space-y-4">
+          <div>
+            <Label htmlFor="email">Email address</Label>
             <Input
               id="email"
               type="email"
-              placeholder="Enter your email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setError(null);
+              }}
               required
+              placeholder="Enter your email"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+        </div>
+
+        {error && (
+          <div className="text-sm text-red-600">
+            {error}
           </div>
-          {error && (
-            <div className="text-sm text-red-500">
-              {error}
-            </div>
-          )}
-        </CardContent>
-        <CardFooter className="flex flex-col space-y-2">
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
+        )}
+
+        <div className="flex flex-col space-y-4">
+          <Button 
+            type="submit" 
+            disabled={isLoading}
           >
-            {loading ? 'Loading...' : 'Sign In'}
+            {isLoading ? 'Loading...' : 'Sign in with Magic Link'}
           </Button>
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleSignUp}
-            disabled={loading}
-          >
-            Create Account
-          </Button>
-        </CardFooter>
+        </div>
       </form>
-    </Card>
+    </div>
   );
 } 
