@@ -31,7 +31,9 @@ export async function middleware(req: NextRequest) {
       auth: {
         autoRefreshToken: true,
         persistSession: true,
-        flowType: 'implicit'
+        flowType: 'implicit',
+        // Additional config to manage sessions effectively
+        detectSessionInUrl: true
       }
     }
   );
@@ -40,6 +42,12 @@ export async function middleware(req: NextRequest) {
     const {
       data: { session },
     } = await supabase.auth.getSession();
+
+    // Auth callback paths should be excluded from redirection
+    if (req.nextUrl.pathname.includes('/auth/callback') || 
+        req.nextUrl.pathname.includes('/api/auth/callback')) {
+      return res;
+    }
 
     // If user is not signed in and the current path is not / or /auth/login,
     // redirect the user to /auth/login
@@ -61,5 +69,8 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!auth/callback|api/auth/callback).*)',
+  ],
 }; 

@@ -11,11 +11,18 @@ export async function GET(request: NextRequest) {
   if (code) {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStore });
-    await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    
+    if (!error) {
+      // URL to redirect to after sign in process completes - go to dashboard instead of root
+      return NextResponse.redirect(new URL('/dashboard', requestUrl.origin));
+    }
+    
+    console.error("Auth callback error:", error);
   }
 
-  // URL to redirect to after sign in process completes
-  return NextResponse.redirect(requestUrl.origin);
+  // If there's an error or no code, redirect to login
+  return NextResponse.redirect(new URL('/auth/login', requestUrl.origin));
 }
 
 export const dynamic = 'force-dynamic'; 
